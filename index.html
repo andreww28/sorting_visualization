@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sorting Visualizer</title>
+    <link rel="stylesheet" href="style.css">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+
+</head>
+<body>
+    <!-- <div class="container">
+        <canvas id="sortCanvas"></canvas>
+        <div class="controls">
+            <button id="randomize">Generate New Array</button>
+            <button id="bubble-btn">Bubble Sort</button>
+        </div>
+    </div> -->
+
+    <section class="main-container">
+        <div class="top-options">
+            <div>
+                <label for="sort-type">SORTING TYPE:</label>
+                <select name="sort-type" id="sort-type">
+                    <option value="bubble" selected>Bubble Sort</option>
+                    <option value="insertion">Insertion Sort</option>
+                    <option value="selection">Selection Sort</option>
+                </select>
+            </div>
+            <div>
+                <label for="speed-input">SPEED:</label>
+                <input type="number" name="speed-input" id="speed-input" placeholder="in milliseconds">
+            </div>
+            <div>
+                <label for="item-count">NUMBER OF ITEMS:</label>
+                <input type="number" name="item-count" id="item-count">
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="main-info-div">
+                <h1>BUBBLE SORT</h1>
+                <canvas id="sortCanvas"></canvas>
+                <div class="controls">
+                    <button id="randomize">Randomize</button>
+                    <button id="start-btn">Start Sorting</button>
+                    
+
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="script.js"></script>
+</body>
+</html>
