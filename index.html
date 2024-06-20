@@ -9,6 +9,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
 
 </head>
 <body>
@@ -31,7 +33,14 @@
                 </select>
             </div>
             <div>
-                <label for="speed-input">SPEED:</label>
+                <label for="direction-type">Direction:</label>
+                <select name="direction-type" id="direction-type">
+                    <option value="asc" selected>Ascending</option>
+                    <option value="desc">Descending</option>
+                </select>
+            </div>
+            <div>
+                <label for="speed-input">SPEED (ms):</label>
                 <input type="number" name="speed-input" id="speed-input" placeholder="in milliseconds">
             </div>
             <div>
@@ -43,7 +52,14 @@
         <div class="main-content">
             <div class="main-info-div">
                 <h1>BUBBLE SORT</h1>
-                <canvas id="sortCanvas"></canvas>
+                <div class="visual-container">
+                    <canvas id="sortCanvas"></canvas>
+                    <div class="console-container">
+                        <h6>Initial Array: <span class="initial-arr"></span></h6>
+                        <div class="console-content">
+                        </div>
+                    </div>
+                </div>
                 <div class="controls">
                     <button id="randomize">Randomize</button>
                     <button id="start-btn">Start Sorting</button>
