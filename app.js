@@ -15,14 +15,6 @@ const skyscraperImages = [];
 let sortingInProgress = false;
 let cancelSorting = false;
 
-//getting the tag from the html file and assiging it to the variable
-const sort_type_select = document.getElementById('sort-type');
-const direction_type = document.getElementById('direction-type');
-const speed_input = document.getElementById('speed-input');
-const item_count_input = document.getElementById('item-count');
-
-const randomize_btn = document.getElementById('randomize');
-const start_btn = document.getElementById('start-btn');
 
 // List of images 
 const imageSources = [
@@ -32,9 +24,136 @@ const imageSources = [
     'skyscraper5.png',
 ];
 
+//getting the tag from the html file and assiging it to the variable
+const sort_type_select = document.getElementById('sort-type');
+const direction_type = document.getElementById('direction-type');
+const speed_input = document.getElementById('speed-input');
+const item_count_input = document.getElementById('item-count');
 
-const Init = (function() {
-    //function for adding data to the imagesource that will be use to draw in canvas
+const randomize_btn = document.getElementById('randomize');
+const start_btn = document.getElementById('start-btn');
+var main_container = document.querySelector('.console-content');
+
+
+const ArrayData = (function() {
+    function generateArray() {
+        array = [];
+        for (let i = 0; i < numSkyscrapers; i++) {
+            array.push({
+                height: Math.floor(Math.random() * (height - 10)) + 10,
+                state: 'default', 
+                image: skyscraperImages[Math.floor(Math.random() * skyscraperImages.length)] // Assign a random image to each skyscraper
+            });
+        }
+
+        document.querySelector('.initial-arr').textContent = array.map(arr => arr.height);
+        main_container.innerHTML = '';
+    }
+
+    function resetArray() {
+        numSkyscrapers = parseInt(item_count_input.value);  //get the value of the item count options
+        speed = parseFloat(speed_input.value); //get the value of the speed input
+        direction = direction_type.value;
+        cancelSorting = true; // Cancel any ongoing sorting
+
+        ArrayData.generateArray();
+        Canvas.drawArray();
+    }
+
+    return {
+        generateArray,
+        resetArray
+    }
+
+})();
+
+
+const DomManipulate = (function() {
+    function setTitle() {
+        var h1 = document.querySelector('h1');
+        switch(sort_type_select.value) {
+            case 'bubble':
+                h1.textContent = "BUBBLE SORT";
+                break;
+            case 'insertion':
+                h1.textContent = "INSERTION SORT";
+                break;
+            case 'selection':
+                h1.textContent = "SELECTION SORT";
+                break;
+        }
+    }
+
+    function DataToConsole(data) {
+        var main_container = document.querySelector('.console-content');
+        var item_container = document.createElement('div');
+
+        data.forEach(d => {
+            let p_tag = document.createElement('p');
+            p_tag.textContent = d.height;
+            p_tag.classList.add(d.state);
+            item_container.appendChild(p_tag);
+        });
+
+        main_container.appendChild(item_container);
+        scrollToBottom();
+    }
+
+    function scrollToBottom() {
+        var container = document.querySelector('.console-container');
+        container.scrollTop = container.scrollHeight;
+    }
+
+    return {
+        setTitle,
+        DataToConsole,
+        scrollToBottom
+    }
+})();
+
+
+
+const Canvas = (function() {
+    function drawArray() {
+        ctx.clearRect(0, 0, width, height);
+        const skyscraperWidth = width / numSkyscrapers;
+    
+        //loop all the data in array
+        array.forEach((skyscraper, index) => {
+            // Apply filters based on the state
+            if (skyscraper.state === 'comparing') {
+                ctx.filter = 'brightness(4)'; // Highlight comparing skyscrapers
+            } else if (skyscraper.state === 'swapping') {
+                ctx.filter = 'hue-rotate(180deg)'; //make the picture yellow
+            } else if (skyscraper.state === 'sorted') {
+                ctx.filter = 'contrast(2)'; // Highlight swapping skyscrapers
+            } else {
+                ctx.filter = 'none'; // Default state
+            }
+    
+            const x = index * skyscraperWidth;
+            const y = height - skyscraper.height;
+    
+            ctx.drawImage(
+                skyscraper.image, // Image element
+                x, // x position
+                y, // y position
+                skyscraperWidth, // width
+                skyscraper.height // height
+            );
+    
+            // Reset filter
+            ctx.filter = 'none';
+        });
+    }
+
+
+    return {
+        drawArray
+    }
+})();
+
+const Utils = (function() {
     function setSkyscraperImages() {
         imageSources.forEach(src => {
             const img = new Image();
@@ -64,131 +183,26 @@ const Init = (function() {
         node.connect(audioCtx.destination);
     }
 
-
-    function add_data_to_console(data) {
-        var main_container = document.querySelector('.console-content');
-        var item_container = document.createElement('div');
-
-        data.forEach(d => {
-            let p_tag = document.createElement('p');
-            p_tag.textContent = d.height;
-            p_tag.classList.add(d.state);
-            item_container.appendChild(p_tag);
-        });
-
-        main_container.appendChild(item_container);
-        Init.scrollToBottom();
+    function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
     }
 
-    //this function for generating a random data in array variable 
-    function generateArray() {
-        array = [];
-        for (let i = 0; i < numSkyscrapers; i++) {
-            array.push({
-                height: Math.floor(Math.random() * (height - 10)) + 10,
-                state: 'default', // State of the skyscraper (default, comparing, swapping, sorted)
-                image: skyscraperImages[Math.floor(Math.random() * skyscraperImages.length)] // Assign a random image to each skyscraper
-            });
-        }
-
-        document.querySelector('.initial-arr').textContent = array.map(arr => arr.height);
-        document.querySelector('.console-content').innerHTML = '';
+    return {
+        playNote,
+        sleep,
+        setSkyscraperImages
     }
+})();
 
-    //this function is for drawing the data/items in array in canvas
-    function drawArray() {
-        ctx.clearRect(0, 0, width, height);
-        const skyscraperWidth = width / numSkyscrapers;
-    
-        //loop all the data in array
-        array.forEach((skyscraper, index) => {
-            // Apply filters based on the state
-            if (skyscraper.state === 'comparing') {
-                ctx.filter = 'brightness(4)'; // Highlight comparing skyscrapers
-            } else if (skyscraper.state === 'swapping') {
-                ctx.filter = 'hue-rotate(180deg)'; // Shade of blue for sorted skyscrapers
-            } else if (skyscraper.state === 'sorted') {
-                ctx.filter = 'contrast(2)'; // Highlight swapping skyscrapers
-            } else {
-                ctx.filter = 'none'; // Default state
-            }
-    
-            const x = index * skyscraperWidth;
-            const y = height - skyscraper.height;
-    
-            // Draw the skyscraper image to the canvas
-            ctx.drawImage(
-                skyscraper.image, // Image element
-                x, // x position
-                y, // y position
-                skyscraperWidth, // width
-                skyscraper.height // height
-            );
-    
-            // Reset filter
-            ctx.filter = 'none';
-        });
-    }
+const Sorting = (function() {
+    var condition = null;
 
-    //this function is responsible for swapping in bubble sort
     function swap(arr, i, j) {
         let temp = arr[i];
         arr[i] = arr[j];
         arr[j] = temp;
     }
 
-    function resetArray() {
-        numSkyscrapers = parseInt(item_count_input.value);  //get the value of the item count options
-        speed = parseFloat(speed_input.value); //get the value of the speed input
-        direction = direction_type.value;
-        cancelSorting = true; // Cancel any ongoing sorting
-
-        generateArray();
-        drawArray();
-    }
-    
-    // Helper function to pause execution for visualization
-    function sleep(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-    }
-
-    function setTitle() {
-        var h1 = document.querySelector('h1');
-        switch(sort_type_select.value) {
-            case 'bubble':
-                h1.textContent = "BUBBLE SORT";
-                break;
-            case 'insertion':
-                h1.textContent = "INSERTION SORT";
-                break;
-            case 'selection':
-                h1.textContent = "SELECTION SORT";
-                break;
-        }
-    }
-
-    function scrollToBottom() {
-        var container = document.querySelector('.console-container');
-        container.scrollTop = container.scrollHeight;
-      }
-
-    return {
-        setSkyscraperImages,
-        generateArray,
-        drawArray,
-        swap,
-        resetArray,
-        sleep,
-        add_data_to_console,
-        setTitle,
-        scrollToBottom,
-        playNote
-    }
-})();
-
-const Sorting = (function() {
-    var condition = null;
-    //this function is async because of the await e.g. (await Init.sleep(speed);)
     async function visualizeBubbleSort() {
         sortingInProgress = true;
         cancelSorting = false;
@@ -204,9 +218,10 @@ const Sorting = (function() {
                 array[j + 1].state = 'comparing';
 
                 //Init.drawArray is called again to highlight the item while comparing in the canvas
-                Init.drawArray();
-                await Init.sleep(400); // speed of visualization (milliseconds)
+                Canvas.drawArray();
+                await Utils.sleep(400); // speed of visualization (milliseconds)
     
+                //deciding what condition to be applied based on the direction option
                 if(direction === 'desc') {
                     condition = array[j].height < array[j + 1].height
                 }else if(direction === 'asc') {
@@ -219,13 +234,13 @@ const Sorting = (function() {
                     array[j + 1].state = 'swapping';
                     
                     //Init.drawArray is called again to highlight the item while swapping in the canvas
-                    Init.drawArray();
-                    
-                    await Init.sleep(speed); //how quick the swapping         
-                    Init.swap(array, j, j + 1);
-                    Init.playNote(array[i].height * 5);
-                    Init.playNote(array[j].height * 5);
-                    Init.add_data_to_console(array);
+                    Canvas.drawArray();
+                    await Utils.sleep(speed); //how quick the swapping         
+
+                    swap(array, j, j + 1);
+                    Utils.playNote(array[i].height * 5);
+                    Utils.playNote(array[j].height * 5);
+                    DomManipulate.DataToConsole(array);
 
                 }
     
@@ -236,18 +251,17 @@ const Sorting = (function() {
     
             // Mark the last sorted element
             array[array.length - i - 1].state = 'sorted';
-            Init.drawArray();
+            Canvas.drawArray();
         }
     
         //this is the end of sorting
         // Mark all elements as sorted
         array.forEach(skyscraper => skyscraper.state = 'okay');
-        Init.add_data_to_console(array);
-        Init.drawArray();
+        DomManipulate.DataToConsole(array);
+        Canvas.drawArray();
         sortingInProgress = false;
     }
 
-    //this function is async because of the await e.g. (await Init.sleep(speed);)
     async function visualizeSelectionSort() {
         sortingInProgress = true;
         cancelSorting = false;
@@ -262,11 +276,12 @@ const Sorting = (function() {
                 // Highlight the skyscrapers being compared - just like in bubble sort
                 array[j].state = 'comparing';
                 array[minIdx].state = 'comparing';
-                Init.drawArray();
+                Canvas.drawArray();
 
-                Init.playNote(400);
-                await Init.sleep(400); // Adjust speed of visualization (milliseconds)
+                Utils.playNote(400);
+                await Utils.sleep(400); // Adjust speed of visualization (milliseconds)
     
+
                 if(direction === 'desc') {
                     condition = array[j].height > array[minIdx].height
                 }else if(direction === 'asc') {
@@ -286,30 +301,33 @@ const Sorting = (function() {
                 // Highlight the skyscrapers being swapped
                 array[i].state = 'swapping';
                 array[minIdx].state = 'swapping';
-                Init.drawArray();
-                await Init.sleep(speed);
+                Canvas.drawArray();
+                await Utils.sleep(speed);
     
-                Init.swap(array, i, minIdx);
-                Init.add_data_to_console(array);
+                swap(array, i, minIdx);
+                DomManipulate.DataToConsole(array);
 
-                Init.playNote(array[i].height * 10);
-                    Init.playNote(array[minIdx].height * 10);
+                Utils.playNote(array[i].height * 10);
+                Utils.playNote(array[minIdx].height * 10);
+
+                // Reset states
+                array[i].state = 'default';
+                array[minIdx].state = 'default';
             }
     
             // Mark the sorted element
             array[i].state = 'sorted';
-            Init.drawArray();
+            Canvas.drawArray();
         }
     
         //this is the end of sorting
         // Mark all elements as sorted
         array.forEach(skyscraper => skyscraper.state = 'okay');
-        Init.add_data_to_console(array);
-        Init.drawArray();
+        DomManipulate.DataToConsole(array);
+        Canvas.drawArray();
         sortingInProgress = false;
     }
 
-    // Insertion Sort Visualization
     async function visualizeInsertionSort() {
         sortingInProgress = true;
         cancelSorting = false;
@@ -325,8 +343,8 @@ const Sorting = (function() {
     
             // Highlight the key element
             key.state = 'comparing';
-            Init.drawArray();
-            await Init.sleep(400); // Adjust speed of visualization (milliseconds)
+            Canvas.drawArray();
+            await Utils.sleep(400); // Adjust speed of visualization (milliseconds)
     
             let cond;
             if (direction === 'desc') {
@@ -339,8 +357,8 @@ const Sorting = (function() {
                 // Highlight elements being compared
                 array[j].state = 'comparing';
                 array[j + 1].state = 'comparing';
-                Init.drawArray();
-                await Init.sleep(speed);
+                Canvas.drawArray();
+                await Utils.sleep(speed);
     
                 // Swap elements
                 let temp = array[j + 1];
@@ -350,24 +368,20 @@ const Sorting = (function() {
                 // Update states for visualization
                 array[j].state = 'swapping';
                 array[j + 1].state = 'swapping';
-                Init.drawArray();
-                Init.add_data_to_console(array);
-                Init.playNote(array[i].height * 10);
-                Init.playNote(array[j].height * 10);
-                await Init.sleep(speed);
+                Canvas.drawArray();
+                DomManipulate.DataToConsole(array);
+                Utils.playNote(array[i].height * 10);
+                Utils.playNote(array[j].height * 10);
+                await Utils.sleep(speed);
     
                 array[j].state = 'default';
                 array[j + 1].state = 'default';
-                Init.drawArray();
+                Canvas.drawArray();
     
                 j--;
     
                 if (j >= 0) {
-                    if (direction === 'desc') {
-                        cond = array[j].height < key.height;
-                    } else if (direction === 'asc') {
-                        cond = array[j].height > key.height;
-                    }
+                    cond = (direction === 'desc') ? array[j].height < key.height : array[j].height > key.height;
                 } else {
                     cond = false;
                 }
@@ -376,35 +390,17 @@ const Sorting = (function() {
             // Place key in its sorted position
             array[j + 1] = key;
             array[j + 1].state = 'sorted';
-            Init.drawArray();
+            Canvas.drawArray();
         }
     
         // Mark all elements as sorted
         array.forEach(skyscraper => skyscraper.state = 'okay');
-        Init.drawArray();
-        Init.add_data_to_console(array);
+        Canvas.drawArray();
+        DomManipulate.DataToConsole(array);
         sortingInProgress = false;
     }
-    
 
-    return {
-        visualizeBubbleSort,
-        visualizeSelectionSort,
-        visualizeInsertionSort
-    }
-})();
-
-//this main function will be executed after the page load
-function main() {
-    //this function adds an images to the array to display it in the canvas
-    Init.setSkyscraperImages();
-    Init.setTitle();
-
-    //adding click event to the randomize button
-    randomize_btn.addEventListener('click', Init.resetArray);
-    
-    //adding click event to the start sorting button
-    start_btn.addEventListener('click', () => {
+    function startSorting() {
         numSkyscrapers = parseInt(item_count_input.value); //getting the value of number of items field and convert it into int
         speed = parseFloat(speed_input.value); //getting the value of speed field and convert it into int
         direction = direction_type.value;
@@ -423,13 +419,26 @@ function main() {
                 Sorting.visualizeInsertionSort();
                 break;
         }
-    })
+    }
 
-    sort_type_select.addEventListener('change', Init.setTitle)
+    return {
+        visualizeBubbleSort,
+        visualizeSelectionSort,
+        visualizeInsertionSort,
+        startSorting
+    }
+})();
 
-    //if the value of number of items field is change by the user on type, the canvas will be updated
-    item_count_input.addEventListener('keyup', Init.resetArray);
-    item_count_input.addEventListener('change', Init.resetArray);
+function main() {
+    Utils.setSkyscraperImages();
+    DomManipulate.setTitle();
+
+    randomize_btn.addEventListener('click', ArrayData.resetArray);
+    start_btn.addEventListener('click', Sorting.startSorting);
+    sort_type_select.addEventListener('change', DomManipulate.setTitle);
+
+    item_count_input.addEventListener('keyup', ArrayData.resetArray);
+    item_count_input.addEventListener('change', ArrayData.resetArray);
 
     //after loading and importing of all the images, it will generate a random array and display it in the canvas
     Promise.all(skyscraperImages.map(img => new Promise(resolve => {
@@ -438,9 +447,9 @@ function main() {
         speed_input.value = '400';
         item_count_input.value = '10';
 
-        Init.resetArray();
-        Init.generateArray();
-        Init.drawArray();
+        ArrayData.resetArray();
+        ArrayData.generateArray();
+        Canvas.drawArray();
     });
 }
 
