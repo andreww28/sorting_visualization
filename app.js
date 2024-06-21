@@ -9,12 +9,11 @@ const height = canvas.height;
 let audioCtx=null;
 let numSkyscrapers = 10; // Number of skyscrapers in the array
 let speed = 400;
+let highlight_speed = 300;
 let direction = 'asc';
 
 const skyscraperImages = [];
-let sortingInProgress = false;
-let cancelSorting = false;
-
+let finished_sorting = false;
 
 // List of images 
 const imageSources = [
@@ -54,7 +53,7 @@ const ArrayData = (function() {
         numSkyscrapers = parseInt(item_count_input.value);  //get the value of the item count options
         speed = parseFloat(speed_input.value); //get the value of the speed input
         direction = direction_type.value;
-        cancelSorting = true; // Cancel any ongoing sorting
+        finished_sorting = false;
 
         ArrayData.generateArray();
         Canvas.drawArray();
@@ -100,14 +99,26 @@ const DomManipulate = (function() {
     }
 
     function scrollToBottom() {
-        var container = document.querySelector('.console-container');
+        var container = document.querySelector('.console-content');
         container.scrollTop = container.scrollHeight;
+    }
+
+    function disableActionBtns() {
+        randomize_btn.disabled = true;
+        start_btn.disabled = true;
+    }
+
+    function enableActionBtns() {
+        randomize_btn.disabled = false;
+        start_btn.disabled = false;
     }
 
     return {
         setTitle,
         DataToConsole,
-        scrollToBottom
+        scrollToBottom,
+        disableActionBtns,
+        enableActionBtns
     }
 })();
 
@@ -203,38 +214,42 @@ const Sorting = (function() {
         arr[j] = temp;
     }
 
+    function visualize_swapping(array, i, j) {
+        // Highlight the skyscrapers being swapped
+        array[i].state = 'swapping';
+        array[j].state = 'swapping';
+        
+        //Init.drawArray is called again to highlight the item while swapping in the canvas
+        Canvas.drawArray();
+    }
+
+    function visualize_comparing(array, i, j) {
+        // Highlight the skyscrapers being swapped
+        array[i].state = 'comparing';
+        array[j].state = 'comparing';
+        
+        //Init.drawArray is called again to highlight the item while swapping in the canvas
+        Canvas.drawArray();
+    }
+
+    function visualize_reset_state(array, i, j) {
+        // Highlight the skyscrapers being swapped
+        array[i].state = 'default';
+        array[j].state = 'default';
+        
+    }
+
     async function visualizeBubbleSort() {
-        sortingInProgress = true;
-        cancelSorting = false;
         for (let i = 0; i < array.length; i++) {
             for (let j = 0; j < array.length - i - 1; j++) {
-                //this if statement will stop the sorting if the user click the randomize (required)
-                if (cancelSorting) {
-                    sortingInProgress = false;
-                    return;
-                }
-                // Highlight the skyscrapers being compared
-                array[j].state = 'comparing';
-                array[j + 1].state = 'comparing';
-
-                //Init.drawArray is called again to highlight the item while comparing in the canvas
-                Canvas.drawArray();
-                await Utils.sleep(400); // speed of visualization (milliseconds)
+                visualize_comparing(array, j, j+1);
+                await Utils.sleep(highlight_speed); // speed of visualization (milliseconds)
     
-                //deciding what condition to be applied based on the direction option
-                if(direction === 'desc') {
-                    condition = array[j].height < array[j + 1].height
-                }else if(direction === 'asc') {
-                    condition = array[j].height > array[j + 1].height
-                }
+                condition = direction === 'desc' ? array[j].height < array[j + 1].height : array[j].height > array[j + 1].height;
 
                 if (condition) {
                     // Highlight the skyscrapers being swapped
-                    array[j].state = 'swapping';
-                    array[j + 1].state = 'swapping';
-                    
-                    //Init.drawArray is called again to highlight the item while swapping in the canvas
-                    Canvas.drawArray();
+                    visualize_swapping(array, j, j+1);
                     await Utils.sleep(speed); //how quick the swapping         
 
                     swap(array, j, j + 1);
@@ -243,10 +258,7 @@ const Sorting = (function() {
                     DomManipulate.DataToConsole(array);
 
                 }
-    
-                // Reset states
-                array[j].state = 'default';
-                array[j + 1].state = 'default';
+                visualize_reset_state(array, j, j+1);
             }
     
             // Mark the last sorted element
@@ -257,51 +269,32 @@ const Sorting = (function() {
         //this is the end of sorting
         // Mark all elements as sorted
         array.forEach(skyscraper => skyscraper.state = 'okay');
-        DomManipulate.DataToConsole(array);
         Canvas.drawArray();
-        sortingInProgress = false;
+        DomManipulate.DataToConsole(array);
+        DomManipulate.enableActionBtns();
+
+        finished_sorting = true;
     }
 
     async function visualizeSelectionSort() {
-        sortingInProgress = true;
-        cancelSorting = false;
         for (let i = 0; i < array.length; i++) {
             let minIdx = i;
+            
             for (let j = i + 1; j < array.length; j++) {
-                //this if statement will stop the sorting if the user click the randomize (required)
-                if (cancelSorting) {
-                    sortingInProgress = false;
-                    return;
-                }
-                // Highlight the skyscrapers being compared - just like in bubble sort
-                array[j].state = 'comparing';
-                array[minIdx].state = 'comparing';
-                Canvas.drawArray();
-
+                visualize_comparing(array, j, minIdx);
                 Utils.playNote(400);
-                await Utils.sleep(400); // Adjust speed of visualization (milliseconds)
+                await Utils.sleep(highlight_speed); // Adjust speed of visualization (milliseconds)
     
-
-                if(direction === 'desc') {
-                    condition = array[j].height > array[minIdx].height
-                }else if(direction === 'asc') {
-                    condition = array[j].height < array[minIdx].height
-                }
+                condition = direction === 'desc' ? array[j].height > array[minIdx].height : array[j].height < array[minIdx].height
 
                 if (condition) {
                     minIdx = j;
                 }
-    
-                // Reset states
-                array[j].state = 'default';
-                array[minIdx].state = 'default';
+                visualize_reset_state(array, j, minIdx);
             }
     
             if (minIdx !== i) {
-                // Highlight the skyscrapers being swapped
-                array[i].state = 'swapping';
-                array[minIdx].state = 'swapping';
-                Canvas.drawArray();
+                visualize_swapping(array, i, minIdx);
                 await Utils.sleep(speed);
     
                 swap(array, i, minIdx);
@@ -310,9 +303,7 @@ const Sorting = (function() {
                 Utils.playNote(array[i].height * 10);
                 Utils.playNote(array[minIdx].height * 10);
 
-                // Reset states
-                array[i].state = 'default';
-                array[minIdx].state = 'default';
+                visualize_reset_state(array, i, minIdx);
             }
     
             // Mark the sorted element
@@ -323,67 +314,46 @@ const Sorting = (function() {
         //this is the end of sorting
         // Mark all elements as sorted
         array.forEach(skyscraper => skyscraper.state = 'okay');
-        DomManipulate.DataToConsole(array);
         Canvas.drawArray();
-        sortingInProgress = false;
+        DomManipulate.DataToConsole(array);
+        DomManipulate.enableActionBtns();
+
+        finished_sorting = true;
     }
 
     async function visualizeInsertionSort() {
-        sortingInProgress = true;
-        cancelSorting = false;
-    
         for (let i = 1; i < array.length; i++) {
-            if (cancelSorting) {
-                sortingInProgress = false;
-                return;
-            }
-    
             let key = array[i];
             let j = i - 1;
     
             // Highlight the key element
             key.state = 'comparing';
             Canvas.drawArray();
-            await Utils.sleep(400); // Adjust speed of visualization (milliseconds)
+            await Utils.sleep(highlight_speed); // Adjust speed of visualization (milliseconds)
     
-            let cond;
-            if (direction === 'desc') {
-                cond = j >= 0 && array[j].height < key.height;
-            } else if (direction === 'asc') {
-                cond = j >= 0 && array[j].height > key.height;
-            }
-    
-            while (cond) {
-                // Highlight elements being compared
-                array[j].state = 'comparing';
-                array[j + 1].state = 'comparing';
-                Canvas.drawArray();
+            condition = direction === 'desc' ? j >= 0 && array[j].height < key.height : j >= 0 && array[j].height > key.height;
+            while (condition) {
+                visualize_comparing(array, j, j+1);
                 await Utils.sleep(speed);
     
                 // Swap elements
-                let temp = array[j + 1];
-                array[j + 1] = array[j];
-                array[j] = temp;
-    
-                // Update states for visualization
-                array[j].state = 'swapping';
-                array[j + 1].state = 'swapping';
-                Canvas.drawArray();
+                swap(array, j+1, j);
+                visualize_swapping(array, j, j+1);
+
                 DomManipulate.DataToConsole(array);
                 Utils.playNote(array[i].height * 10);
                 Utils.playNote(array[j].height * 10);
                 await Utils.sleep(speed);
     
-                array[j].state = 'default';
-                array[j + 1].state = 'default';
+                visualize_reset_state(array, j, j+1);
                 Canvas.drawArray();
     
                 j--;
     
                 if (j >= 0) {
-                    cond = (direction === 'desc') ? array[j].height < key.height : array[j].height > key.height;
+                    condition = (direction === 'desc') ? array[j].height < key.height : array[j].height > key.height;
                 } else {
-                    cond = false;
+                    condition = false;
                 }
             }
     
@@ -397,7 +367,9 @@ const Sorting = (function() {
         array.forEach(skyscraper => skyscraper.state = 'okay');
         Canvas.drawArray();
         DomManipulate.DataToConsole(array);
-        sortingInProgress = false;
+        DomManipulate.enableActionBtns();
+
+        finished_sorting = true;
     }
 
     function startSorting() {
@@ -406,6 +378,12 @@ const Sorting = (function() {
         direction = direction_type.value;
         let sort_type = sort_type_select.value; ////getting the value of sorting type dropdown and convert it into int
 
+        DomManipulate.disableActionBtns();
+
+        console.log(finished_sorting);
+        if(finished_sorting){
+            ArrayData.resetArray();
+        }
         //this switch statement will execute an algorithm function based on the value of sorting type dropdown
         switch(sort_type) {
             case 'bubble':

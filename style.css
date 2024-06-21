@@ -95,6 +95,12 @@ h1 {
     border-radius: 10px;
 }
 
+
+.controls button:disabled {
+    background-color: #4b4b4b;
+    cursor: default;
+}
+
 .visual-container {
     display: flex;
     align-items: center;
@@ -130,14 +136,13 @@ h1 {
     min-width: 15em;
     color: rgb(216, 216, 216);
     padding: 1em;
-    overflow: auto;
     border-radius: 10px;
     -webkit-box-shadow: 14px 9px 18px -7px rgba(224,224,224,1);
     box-shadow: 2px 1px 5px #ffffff8b;
+    overflow: auto;
 }
 
 h6 {
-    text-align: center;
     font-size: 1rem;
 }
 
@@ -151,7 +156,8 @@ h6 {
     flex-direction: column;
     gap: 1em;
     width: 100%;
-    align-items: center;
+    align-items: flex-start;
+    overflow: auto;
 }
 
 .console-content > div {
